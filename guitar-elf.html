@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>音乐精灵 · 吉他成长</title>
+<style>
+  :root {
+    color-scheme: light;
+    --bg:        #f7f3ec;
+    --surface:   #fffdf9;
+    --surface-2: #fbf8f1;
+    --ink:       #251f19;
+    --ink-2:     #5f564b;
+    --muted:     #9c9184;
+    --line:      #ebe3d6;
+    --axis:      #ddd1bf;
+    --accent:    #b08d57;   /* 香槟金：品牌主色 */
+    --accent-2:  #8a6d43;   /* 深金 */
+    --gold:      #c9a87c;
+    --gold-soft: rgba(176, 141, 87, 0.14);
+    --green:     #7a9b86;
+    --shadow:    0 24px 60px rgba(90, 68, 38, 0.09);
+    --shadow-sm: 0 8px 24px rgba(90, 68, 38, 0.06);
+    --ring:      #efe8db;
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg:        #13100c;
+    --surface:   #1d1914;
+    --surface-2: #221d16;
+    --ink:       #f2ece0;
+    --ink-2:     #c6bba8;
+    --muted:     #877c6c;
+    --line:      #322b21;
+    --axis:      #42382b;
+    --accent:    #c9a87c;
+    --accent-2:  #d9bd92;
+    --gold:      #d8bc93;
+    --gold-soft: rgba(201, 168, 124, 0.14);
+    --green:     #86ab93;
+    --shadow:    0 24px 60px rgba(0, 0, 0, 0.45);
+    --shadow-sm: 0 8px 24px rgba(0, 0, 0, 0.4);
+    --ring:      #322b21;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.3s, color 0.3s;
+  }
+  .serif {
+    font-family: "Songti SC", "Noto Serif SC", "STSong", Georgia, "Times New Roman", serif;
+  }
+
+  .wrap { max-width: 880px; margin: 0 auto; padding: 40px 22px 72px; }
+
+  /* ---------- 顶栏 ---------- */
+  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 26px; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand .logo {
+    width: 52px; height: 52px; border-radius: 16px;
+    background: linear-gradient(145deg, var(--surface), var(--surface-2));
+    border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; box-shadow: var(--shadow-sm);
+  }
+  .brand .name { font-size: 21px; font-weight: 700; letter-spacing: 1px; }
+  .brand .sub { font-size: 12px; color: var(--muted); margin-top: 3px; letter-spacing: 0.5px; }
+  .icon-btn {
+    width: 40px; height: 40px; border-radius: 13px;
+    border: 1px solid var(--line); background: var(--surface);
+    color: var(--ink-2); font-size: 17px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow-sm);
+    transition: background 0.15s, color 0.15s, transform 0.15s, border-color 0.15s;
+  }
+  .icon-btn:hover { background: var(--gold-soft); color: var(--accent-2); transform: translateY(-1px); }
+
+  .gold-rule { height: 1px; margin-bottom: 24px; background: linear-gradient(90deg, transparent, var(--gold) 20%, var(--gold) 80%, transparent); opacity: 0.5; }
+
+  /* ---------- 首次使用引导条 ---------- */
+  .onboard {
+    display: flex; align-items: center; justify-content: space-between; gap: 18px;
+    background: linear-gradient(135deg, var(--gold-soft), var(--surface));
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line));
+    border-radius: 16px; padding: 16px 20px; margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .onboard .o-title { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+  .onboard .o-steps { font-size: 13px; color: var(--ink-2); line-height: 1.8; }
+  .onboard .o-steps b { color: var(--accent-2); font-weight: 700; }
+  .onboard-close {
+    flex: 0 0 auto; padding: 8px 15px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--surface);
+    color: var(--ink-2); font-size: 13px; font-weight: 600; cursor: pointer;
+    white-space: nowrap; transition: background 0.15s, transform 0.15s;
+  }
+  .onboard-close:hover { background: var(--gold-soft); }
+
+  /* ---------- 导航 ---------- */
+  .nav {
+    display: flex; gap: 4px; overflow-x: auto; margin-bottom: 28px;
+    border-bottom: 1px solid var(--line); padding-bottom: 0;
+  }
+  .nav-tab {
+    flex: 1; min-width: 92px; text-align: center;
+    padding: 12px 8px 13px; font-size: 14px; font-weight: 600;
+    color: var(--muted); border: none; background: transparent;
+    cursor: pointer; white-space: nowrap; position: relative; letter-spacing: 1px;
+    transition: color 0.2s;
+  }
+  .nav-tab::after {
+    content: ""; position: absolute; left: 50%; bottom: -1px;
+    width: 0; height: 2px; border-radius: 2px;
+    background: var(--accent); transform: translateX(-50%); transition: width 0.25s ease;
+  }
+  .nav-tab:hover { color: var(--ink-2); }
+  .nav-tab.active { color: var(--accent-2); }
+  .nav-tab.active::after { width: 60%; }
+
+  /* ---------- 卡片 ---------- */
+  .card {
+    position: relative; background: var(--surface); border: 1px solid var(--line);
+    border-radius: 20px; padding: 28px; box-shadow: var(--shadow);
+    margin-bottom: 20px; transition: background 0.3s, border-color 0.3s; overflow: hidden;
+  }
+  .card.gilt::before {
+    content: ""; position: absolute; top: 0; left: 28px; right: 28px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent); opacity: 0.6;
+  }
+  .card h2 { font-size: 17px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; letter-spacing: 1px; }
+  .card h2 .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--gold-soft); }
+  .card .lead { font-size: 13px; color: var(--muted); line-height: 1.8; }
+  .card .lead b { color: var(--ink-2); font-weight: 600; }
+
+  /* ---------- 路线图 ---------- */
+  .hero { text-align: center; padding: 42px 26px 34px; }
+  .hero .hi { font-size: 28px; font-weight: 700; line-height: 1.5; letter-spacing: 2px; }
+  .hero .hi em { font-style: normal; color: var(--accent-2); }
+  .hero .lead { max-width: 560px; margin: 16px auto 0; }
+
+  .progress { margin-top: 26px; max-width: 420px; margin-left: auto; margin-right: auto; }
+  .progress .bar-wrap { height: 8px; background: var(--ring); border-radius: 99px; overflow: hidden; }
+  .progress .bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--gold)); border-radius: 99px; transition: width 0.5s ease; }
+  .progress .txt { margin-top: 10px; font-size: 12px; color: var(--muted); letter-spacing: 0.5px; }
+
+  .stage { display: flex; gap: 18px; padding: 20px 2px; border-bottom: 1px solid var(--line); }
+  .stage:last-child { border-bottom: none; }
+  .stage .idx {
+    flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 16px; color: #fff;
+    background: var(--stage-c, var(--accent));
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--stage-c, var(--accent)) 35%, transparent);
+    font-family: Georgia, serif;
+  }
+  .stage .body { flex: 1; }
+  .stage .title { font-weight: 700; font-size: 15px; letter-spacing: 0.5px; }
+  .stage .meta { font-size: 12px; color: var(--muted); margin-top: 4px; letter-spacing: 1px; }
+  .stage .goal { font-size: 13px; color: var(--ink-2); margin-top: 9px; line-height: 1.7; }
+  .stage .check { font-size: 12px; color: var(--accent-2); margin-top: 7px; }
+
+  .today { border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line)); }
+  .today h2 .dot { background: var(--accent); }
+  .today-box { display: flex; gap: 18px; align-items: flex-start; }
+  .today-box .day-badge {
+    flex: 0 0 auto; min-width: 66px; padding: 14px 16px; border-radius: 16px;
+    background: linear-gradient(150deg, var(--accent), var(--accent-2));
+    color: #fff; font-weight: 700; text-align: center;
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+  .today-box .day-badge .n { font-size: 26px; line-height: 1; font-family: Georgia, serif; }
+  .today-box .day-badge .l { font-size: 11px; margin-top: 6px; opacity: 0.92; letter-spacing: 1px; }
+
+  .cta {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 14px;
+    padding: 10px 20px; background: linear-gradient(150deg, var(--accent), var(--accent-2));
+    color: #fff; border: none; border-radius: 12px; font-size: 13px; font-weight: 700;
+    cursor: pointer; letter-spacing: 1px;
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--accent) 30%, transparent);
+    transition: transform 0.15s, filter 0.15s;
+  }
+  .cta:hover { transform: translateY(-1px); filter: brightness(1.05); }
+
+  /* ---------- 任务 / 30天 ---------- */
+  .phase-head {
+    margin: 24px 0 12px; font-size: 13px; font-weight: 700; color: var(--accent-2);
+    display: flex; align-items: center; gap: 12px; letter-spacing: 1px;
+  }
+  .phase-head::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+  .day-row {
+    display: flex; align-items: flex-start; gap: 14px; padding: 18px 18px;
+    border: 1px solid var(--line); border-radius: 16px; margin-bottom: 12px;
+    background: var(--surface); transition: background 0.2s, border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  }
+  .day-row:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+  .day-row.done { background: var(--surface-2); }
+  .day-row .cb {
+    flex: 0 0 auto; width: 26px; height: 26px; margin-top: 2px;
+    border: 2px solid var(--axis); border-radius: 8px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: #fff; transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  }
+  .day-row .cb:hover { border-color: var(--accent); }
+  .day-row.done .cb { background: var(--green); border-color: var(--green); }
+  .day-row .d-body { flex: 1; }
+  .day-row .d-title { font-weight: 700; font-size: 15px; }
+  .day-row .d-title .d-num { color: var(--accent-2); margin-right: 8px; font-family: Georgia, serif; }
+  .day-row .d-tasks { font-size: 13px; color: var(--ink-2); margin-top: 7px; line-height: 1.75; }
+  .day-row .d-tip { font-size: 12px; color: var(--muted); margin-top: 7px; }
+
+  /* ---------- 曲库 ---------- */
+  .song { padding: 24px; border: 1px solid var(--line); border-radius: 18px; margin-bottom: 16px; background: var(--surface); box-shadow: var(--shadow-sm); transition: transform 0.2s, box-shadow 0.2s; }
+  .song:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+  .song-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .song-name { font-size: 18px; font-weight: 700; letter-spacing: 0.5px; }
+  .song-name small { font-weight: 500; color: var(--muted); font-size: 12px; margin-left: 8px; letter-spacing: 0.5px; }
+  .stars { color: var(--gold); font-size: 14px; letter-spacing: 3px; white-space: nowrap; }
+  .song-meta { font-size: 12px; color: var(--muted); margin-top: 7px; line-height: 1.7; letter-spacing: 0.5px; }
+  .song-meta b { color: var(--ink-2); font-weight: 600; }
+  .song-prog { margin-top: 16px; }
+  .song-prog .lab { font-size: 11px; color: var(--accent-2); margin: 10px 0 5px; font-weight: 700; letter-spacing: 1px; }
+  .song-prog .lab:first-child { margin-top: 0; }
+  .chord-line { font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; font-size: 13px; color: var(--ink-2); line-height: 1.9; }
+  .chord-line b { color: var(--accent-2); font-weight: 700; }
+  .strum { margin-top: 14px; font-size: 13px; color: var(--ink-2); line-height: 1.7; }
+  .strum .tag { display: inline-block; font-size: 11px; color: #fff; background: var(--accent); border-radius: 6px; padding: 2px 9px; margin-right: 8px; letter-spacing: 1px; }
+  .chords { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 18px; }
+  .chord {
+    text-align: center; color: var(--ink-2);
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; padding: 10px 10px 8px;
+    transition: transform 0.15s, border-color 0.15s;
+  }
+  .chord:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .chord .c-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 5px; font-family: Georgia, serif; }
+  .chord .c-cap { font-size: 10px; color: var(--muted); margin-bottom: 2px; letter-spacing: 1px; }
+  .chord svg { display: block; }
+  .chord .c-tab { margin-top: 5px; }
+  .chord .c-tip { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .song-note { margin-top: 16px; font-size: 13px; color: var(--ink-2); line-height: 1.75; }
+  .song-note .tag { display: inline-block; font-size: 11px; color: #fff; background: var(--accent); border-radius: 6px; padding: 2px 9px; margin-right: 8px; letter-spacing: 1px; }
+
+  /* ---------- 检测 ---------- */
+  .check-item { display: flex; gap: 14px; align-items: flex-start; padding: 17px 2px; border-bottom: 1px solid var(--line); }
+  .check-item:last-child { border-bottom: none; }
+  .check-item .cb { flex: 0 0 auto; width: 24px; height: 24px; margin-top: 1px; border: 2px solid var(--axis); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #fff; transition: background 0.2s, border-color 0.2s; }
+  .check-item .cb:hover { border-color: var(--accent); }
+  .check-item.on .cb { background: var(--green); border-color: var(--green); }
+  .check-item .c-body { flex: 1; }
+  .check-item .c-title { font-weight: 700; font-size: 15px; }
+  .check-item .c-how { font-size: 12px; color: var(--ink-2); margin-top: 4px; line-height: 1.7; }
+  .check-item .c-bar { font-size: 12px; color: var(--accent-2); margin-top: 4px; }
+
+  /* ---------- 愿景 ---------- */
+  .vision-step { display: flex; gap: 16px; padding: 20px 2px; border-bottom: 1px solid var(--line); }
+  .vision-step:last-child { border-bottom: none; }
+  .vision-step .v-num { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(150deg, var(--accent), var(--accent-2)); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; font-family: Georgia, serif; box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 35%, transparent); }
+  .vision-step .v-title { font-weight: 700; font-size: 15px; letter-spacing: 0.5px; }
+  .vision-step .v-desc { font-size: 13px; color: var(--ink-2); margin-top: 6px; line-height: 1.8; }
+
+  .page { display: none; }
+  .page.active { display: block; animation: fade 0.3s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  .foot { text-align: center; font-size: 12px; color: var(--muted); margin-top: 36px; line-height: 1.8; letter-spacing: 0.5px; }
+
+  @media (max-width: 520px) {
+    .nav-tab { min-width: 70px; font-size: 13px; letter-spacing: 0; }
+    .brand .sub { display: none; }
+    .hero .hi { font-size: 23px; }
+    .today-box { flex-direction: column; }
+    .onboard { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 顶栏 -->
+  <div class="topbar">
+    <div class="brand">
+      <span class="logo">🎸</span>
+      <div>
+        <div class="name serif">音乐精灵 · 吉他成长</div>
+        <div class="sub">从 0 到弹唱 · 用二八定律抄近路</div>
+      </div>
+    </div>
+    <button class="icon-btn" id="themeToggle" title="切换深浅色">🌙</button>
+  </div>
+
+  <div class="gold-rule"></div>
+
+  <!-- 首次使用引导 -->
+  <div class="onboard" id="onboard">
+    <div>
+      <div class="o-title">👋 第一次来？三步上手</div>
+      <div class="o-steps">
+        <b>①</b> 每天打开看「路线图」里的今日任务 &nbsp;·&nbsp;
+        <b>②</b> 练完去「30天计划」点圆圈打勾 &nbsp;·&nbsp;
+        <b>③</b> 到「曲库」学歌、周末到「检测」自测
+      </div>
+    </div>
+    <button class="onboard-close" id="onboardClose">知道了</button>
+  </div>
+
+  <!-- 导航 -->
+  <div class="nav" id="nav">
+    <button class="nav-tab active" data-page="roadmap">路线图</button>
+    <button class="nav-tab" data-page="plan">30天计划</button>
+    <button class="nav-tab" data-page="songs">曲库</button>
+    <button class="nav-tab" data-page="check">检测</button>
+    <button class="nav-tab" data-page="vision">愿景</button>
+  </div>
+
+  <!-- ============ 路线图 ============ -->
+  <section class="page active" id="page-roadmap">
+    <div class="card gilt hero">
+      <div class="hi serif">欢迎回来，未来的<em>吉他手</em> 🎵</div>
+      <p class="lead">学吉他弹唱不需要先啃乐理。你只要抓住 <b>8 个核心和弦</b> + <b>3 条万能和弦进行</b> + <b>3 个节奏型</b>，就能撬动绝大多数流行歌——这就是二八定律。<b>先看下方「今日任务」，练完去打勾。</b></p>
+      <div class="progress">
+        <div class="bar-wrap"><div class="bar-fill" id="roadProgress"></div></div>
+        <div class="txt" id="roadProgressTxt"></div>
+      </div>
+    </div>
+
+    <div class="card gilt today">
+      <h2><span class="dot"></span>今日任务</h2>
+      <div class="today-box" id="todayBox"></div>
+    </div>
+
+    <div class="card gilt">
+      <h2><span class="dot"></span>五阶段路线图</h2>
+      <div id="stages"></div>
+    </div>
+  </section>
+
+  <!-- ============ 30天计划 ============ -->
+  <section class="page" id="page-plan">
+    <div class="card gilt">
+      <h2><span class="dot"></span>每天 30～60 分钟，照着走</h2>
+      <p class="lead"><b>点圆圈打勾</b>标记完成，再点一次取消。进度会自动保存、并同步到「路线图」的进度条。建议固定时间练（比如晚上 9 点），练完顺手录 10 秒视频发抖音/B站。</p>
+    </div>
+    <div class="card" id="planList"></div>
+  </section>
+
+  <!-- ============ 曲库 ============ -->
+  <section class="page" id="page-songs">
+    <div class="card gilt">
+      <h2><span class="dot"></span>目标曲库 · 按难度从易到难</h2>
+      <p class="lead">每首歌都有 <b>和弦指法图（左手怎么按）</b> + <b>六线谱（右手怎么弹）</b> + <b>扫弦节奏</b>。建议顺序：光辉岁月 → 海阔天空 → 天若有情 → 空心 → 晴天。</p>
+    </div>
+    <div id="songList"></div>
+  </section>
+
+  <!-- ============ 检测 ============ -->
+  <section class="page" id="page-check">
+    <div class="card gilt">
+      <h2><span class="dot"></span>帕累托检测清单</h2>
+      <p class="lead">你 80% 的「会不会」，用这 5 项就能判断。<b>点方块打勾</b>，每周末花 10 分钟自测，哪项没过就回对应阶段补。</p>
+    </div>
+    <div class="card gilt" id="checkList"></div>
+  </section>
+
+  <!-- ============ 愿景 ============ -->
+  <section class="page" id="page-vision">
+    <div class="card gilt hero">
+      <div class="hi serif">从一间网站，到一只<em>音乐精灵</em> ✨</div>
+      <p class="lead">你的终点不是「会弹琴」，而是做出一位温柔灵动、像老师一样陪伴人学音乐的具身智能。它分三步走，顺序很重要。</p>
+    </div>
+    <div class="card gilt" id="visionList"></div>
+  </section>
+
+  <div class="foot">🎸 音乐精灵 · 吉他成长 &nbsp;·&nbsp; 单文件 · 本地打开即用 · 数据存本机</div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var KEY = "guitar-elf.progress";
+  var ONBOARD_KEY = "guitar-elf.onboard";
+
+  // ---------- 核心和弦指法（从 6 弦到 1 弦，x=不弹，0=空弦）----------
+  var CHORDS = {
+    "C":    { frets: "x32010" },
+    "D":    { frets: "xx0232" },
+    "Dm":   { frets: "xx0231" },
+    "E":    { frets: "022100" },
+    "Em":   { frets: "022000" },
+    "E7":   { frets: "020100" },
+    "Em7":  { frets: "020000" },
+    "F":    { frets: "xx3211", tip: "小横按" },
+    "Fmaj7":{ frets: "xx3210" },
+    "G":    { frets: "320003" },
+    "G7":   { frets: "320001" },
+    "Am":   { frets: "x02210" },
+    "Am7":  { frets: "x02010" },
+    "B7":   { frets: "x21202" }
+  };
+
+  // 各和弦的「根音弦」（分解和弦第 1 拍拨哪根低音弦）
+  var ROOTS = { "C":5, "G":6, "Am":5, "Em":6, "F":4, "Dm":4, "D":4, "Fmaj7":4, "Em7":6, "Am7":5, "E":6, "E7":6, "B7":5, "G7":6 };
+
+  // ---------- 五阶段路线图 ----------
+  var STAGES = [
+    { name: "阶段一 · 入门", days: "第 1–7 天", color: "#b08d57",
+      goal: "会持琴、会调音、右手能空弦拨弦，按出 C、Am、G 三个和弦。",
+      check: "检测点：60 秒内完成 C↔G 转换 ≥20 次" },
+    { name: "阶段二 · 核心和弦", days: "第 8–14 天", color: "#c9a87c",
+      goal: "拿下 Em 和 F（小横按），集齐 C G Am Em F 五大和弦，学会两种节奏型。",
+      check: "检测点：60 秒内 C↔G 转换 ≥30 次，扫弦 60bpm 不间断" },
+    { name: "阶段三 · 第一首歌", days: "第 15–21 天", color: "#9a7a4e",
+      goal: "完整弹唱《光辉岁月》（C 调 + Capo 4）。这是你从「练琴」跨到「弹唱」的里程碑。",
+      check: "检测点：跟节拍器 60bpm 完整弹唱，不断、不抢拍" },
+    { name: "阶段四 · 第二首歌", days: "第 22–30 天", color: "#7f6a4a",
+      goal: "拿下《海阔天空》（C 调 + Capo 5），并两首连弹。",
+      check: "检测点：两首歌各完整弹唱一遍，录音回听无明显卡壳" },
+    { name: "阶段五 · 自由扩展", days: "第 31 天起", color: "#7a9b86",
+      goal: "按难度逐个攻《天若有情》《空心》《晴天》，加横按 F、前奏间奏、变调夹移调。",
+      check: "检测点：曲库 5 首全部能完整弹唱" }
+  ];
+
+  // ---------- 30 天计划 ----------
+  var PLAN = [
+    { d:1,  p:1, t:"认识吉他 + 持琴 + 调音",
+      tasks:"认识吉他各部分名称；正确持琴姿势（琴背贴胸口、左手托琴颈）；右手空弦逐根拨响；用调音器把 6 根弦调到 EADGBE。",
+      tip:"第一天的目标只是「不陌生」。弦要调准，否则后面练的全是错音。" },
+    { d:2,  p:1, t:"右手空弦拨弦",
+      tasks:"右手拇指拨 6/5/4 弦，食指/中指/无名指拨 3/2/1 弦；慢速交替拨弦 5 分钟；复习调音；记住空弦音名 EADGBE。",
+      tip:"右手是弹唱的根基，先让每根弦都拨得干净、不闷音。" },
+    { d:3,  p:1, t:"左手按出 C 和弦",
+      tasks:"左手按弦姿势（指尖垂直按、靠近品丝）；逐个手指按出 C 和弦（x32010）；右手扫一下听是否每根弦都响。",
+      tip:"按弦疼是正常的，指尖出茧就好了。别用蛮力，垂直按在品丝旁。" },
+    { d:4,  p:1, t:"C 与 Am 两和弦",
+      tasks:"复习 C；学 Am（x02210）；C ↔ Am 慢速转换 10 分钟（先不扫，只练按→松→按）。",
+      tip:"转换的诀窍是「手指一起动」，别一根一根找。" },
+    { d:5,  p:1, t:"加入 G + 循环转换",
+      tasks:"学 G（320003）；练 C → G → Am → C 循环转换 15 分钟；每次转换后扫一下确认干净。",
+      tip:"G 用 2/3/4 指按，留 1 指准备转 C，会快很多。" },
+    { d:6,  p:1, t:"八分扫弦节奏",
+      tasks:"右手学八分扫弦 ↓↑↓↑（下上下上）；用 C→G→Am 循环边换边扫；节拍器 50bpm。",
+      tip:"扫弦手腕放松、像甩水，别用整条胳膊。" },
+    { d:7,  p:1, t:"周检测 + 录第一个视频",
+      tasks:"自测换和弦速度（60 秒 C↔G 次数）；扫弦跟节拍器 30 秒；录 10 秒「第 7 天能弹出什么」发抖音/B站。",
+      tip:"第一个视频不用完美，重要的是开始记录。成长对比日后很值钱。" },
+    { d:8,  p:2, t:"Em 和弦 + 四和弦循环",
+      tasks:"学 Em（022000）；练 C → G → Am → Em 循环；重点让 Am↔Em 转换顺滑。",
+      tip:"Em 只需两根手指，很好按，但转出时手指要利落抬起。" },
+    { d:9,  p:2, t:"F 小横按（重点难点）",
+      tasks:"学 F 的简化小横按（xx3211，1 指横压 1、2 弦）；单独练按响；C ↔ F 转换。",
+      tip:"F 是新手第一道坎，正常卡 2~3 天。先用小横按，大横按第 5 阶段再攻。" },
+    { d:10, p:2, t:"F 巩固",
+      tasks:"反复练 F 按响（四根弦都干净）；C→F→G→C 转换循环；把 F 加进万能进行。",
+      tip:"小横按按不响时，检查食指是否平压、是否贴着品丝。" },
+    { d:11, p:2, t:"五大和弦循环",
+      tasks:"集齐 C G Am Em F 五大和弦；随机顺序转换 15 分钟；每 4 拍换一个和弦。",
+      tip:"五大和弦 = 流行歌的「20%」核心资产，务必练到肌肉记忆。" },
+    { d:12, p:2, t:"节奏型一：扫弦",
+      tasks:"巩固四分下扫 + 八分上下扫；学「下 下上 上下上」流行扫弦；配 C-G-Am-F 循环。",
+      tip:"节奏型比和弦更能决定「像不像原曲」，这关值得多练。" },
+    { d:13, p:2, t:"节奏型二：分解和弦",
+      tasks:"学分解和弦：根音 + 拨弦（如 5-3-2-1 或 6-3-2-1）；配 C-G-Am-F 慢速弹。",
+      tip:"分解是抒情歌的主旋律，手指认弦要准，不看着弹。" },
+    { d:14, p:2, t:"周检测 + 录视频",
+      tasks:"自测 5 项检测清单；录「第 14 天：五大和弦 + 两种节奏型」短视频。",
+      tip:"到这天你应该能流畅弹出卡农进行的骨架，这是质变点。" },
+    { d:15, p:3, t:"《光辉岁月》主歌",
+      tasks:"学主歌和弦进行 C→G→Am→Em；慢速分解跟唱「钟声响起归家的讯号」；反复练。",
+      tip:"原调 E，用 C 调指法 + Capo 4 即还原。先别夹，练熟了再说。" },
+    { d:16, p:3, t:"《光辉岁月》副歌",
+      tasks:"学副歌进行 C→G→Am→Em→F→G→C→G；把主歌+副歌连起来慢速弹。",
+      tip:"F 在这里频繁出现，正好检验你阶段二的小横按有没有过关。" },
+    { d:17, p:3, t:"整首跟节拍器",
+      tasks:"跟节拍器 60bpm 完整弹整首（先只弹不唱）；分段反复直到不卡壳。",
+      tip:"先不唱，专注右手稳定。抢拍是新手通病，靠节拍器治。" },
+    { d:18, p:3, t:"弹唱结合",
+      tasks:"小声跟唱，先唱副歌（最熟的部分），再唱主歌；弹和唱分别熟练再合。",
+      tip:"弹唱是「一心二用」，先练到弹不用想，才能顾上唱。" },
+    { d:19, p:3, t:"完整弹唱 + 录音",
+      tasks:"完整弹唱 3 遍；用手机录音回听，标记卡壳和抢拍的地方。",
+      tip:"录音是照妖镜，你听到的问题就是明天要补的。" },
+    { d:20, p:3, t:"打磨 + 试原调",
+      tasks:"针对录音里的问题单练；夹 Capo 4 试试原调高度（唱不上去就夹 2 品）。",
+      tip:"变调夹是「按自己音域唱歌」的开关，夹几品随你，不夹也完全 OK。" },
+    { d:21, p:3, t:"里程碑检测 + 录成品",
+      tasks:"完整弹唱《光辉岁月》作为「毕业作品」；录完整版发抖音/B站；过 5 项检测清单。",
+      tip:"🎉 这天起你正式「会弹唱」了。第一首完整歌，值得好好记录。" },
+    { d:22, p:4, t:"《海阔天空》主歌",
+      tasks:"学主歌进行 C→G→Am→F；对比发现它和光辉岁月是「近亲」；慢速分解。",
+      tip:"你会发现第二首比第一首学得快得多——这就是二八定律的复利。" },
+    { d:23, p:4, t:"《海阔天空》副歌 + Dm",
+      tasks:"学 Dm（xx0231）；练副歌（含 Dm→G 转换）；主歌+副歌连起来。",
+      tip:"Dm 是新手第一个「小横按感」的和弦，转出转入多练几遍。" },
+    { d:24, p:4, t:"前奏分解",
+      tasks:"学前奏分解（原版用 F9 拇指按弦，可先用 C-Am-F 简化代替）；单独练前奏 10 分钟。",
+      tip:"前奏是海阔天空的灵魂，但不必一上来就原版，简化版够用。" },
+    { d:25, p:4, t:"整首跟节拍器",
+      tasks:"跟节拍器 60~65bpm 完整弹整首；注意副歌的情绪推进（可以稍加力扫）。",
+      tip:"海阔天空副歌要「唱出去」，右手扫弦力度配合情绪变化。" },
+    { d:26, p:4, t:"弹唱结合",
+      tasks:"小声跟唱，主歌用分解、副歌切扫弦；分段合，再整首合。",
+      tip:"主歌分解 + 副歌扫弦，是流行弹唱最常用的「层次感」套路。" },
+    { d:27, p:4, t:"完整弹唱 + 录音",
+      tasks:"完整弹唱 3 遍；录音回听；挑出卡壳段单练。",
+      tip:"和第一首一样，录音回听是最快的进步方式。" },
+    { d:28, p:4, t:"两首连弹",
+      tasks:"《光辉岁月》+《海阔天空》各完整一遍；中间不停顿；练「开嗓+换曲」衔接。",
+      tip:"能连弹两首，说明你的基础已经能支撑「曲库自由扩展」了。" },
+    { d:29, p:4, t:"周检测 + 录视频",
+      tasks:"过 5 项检测清单；录「第 29 天：Beyond 两连弹」短视频。",
+      tip:"这天的视频可以做个「第 7 天 vs 第 29 天」对比，反差就是流量。" },
+    { d:30, p:4, t:"月总结 + 制定下阶段",
+      tasks:"回顾 30 天；定下阶段目标（从曲库选晴天/空心/天若有情）；规划第 2 个月。",
+      tip:"坚持 30 天，你已跑赢 90% 的吉他学习者。下个月冲晴天。" }
+  ];
+
+  // ---------- 曲库（5 首歌，精确和弦 + 扫弦节奏）----------
+  var SONGS = [
+    { name:"光辉岁月", artist:"Beyond", stars:"★★☆", order:"第 1 首",
+      meta:"原调 E · C 调指法 + 变调夹第 4 品 · 4/4 拍 · 约 74bpm",
+      strum:"主歌分解（根音+3-2-1） · 副歌扫弦 ↓ ↓↑ ↓↑ ↓↑",
+      prog:[ ["主歌", "C → G → Am → Em（段落衔接 Am → Em → F → G）"],
+             ["副歌", "C → G → Am → Em → F → G → C → G"],
+             ["前奏", "C → Am → F → G"] ],
+      chords:["C","G","Am","Em","F"],
+      note:"最简单、最适合当第一首：和弦集中在 C G Am Em F，进行重复性高。F 用「小横按」即可。真正略难的是前奏节奏型，可以先跳过前奏直接进主歌。" },
+    { name:"海阔天空", artist:"Beyond", stars:"★★★", order:"第 2 首",
+      meta:"原调 F · C 调指法 + 变调夹第 5 品 · 4/4 拍",
+      strum:"主歌分解 · 副歌扫弦（渐强）↓ ↓↑ ↓↑ ↓↑",
+      prog:[ ["主歌", "C → G → Am → F"],
+             ["副歌", "含 Dm → G 推进（扫弦力度随情绪上扬）"],
+             ["前奏", "原版用 F9（拇指按 6 弦），可先用 C → Am → F 简化"] ],
+      chords:["C","G","Am","F","Dm"],
+      note:"和光辉岁月是「近亲」，和弦高度重叠，所以第二首会学得很快。重点在副歌的情绪层次：主歌用分解、副歌切扫弦。" },
+    { name:"天若有情", artist:"A-Lin（锦绣未央主题曲）", stars:"★★★", order:"第 3 首",
+      meta:"原调 D♭ · C 调指法 + 变调夹第 3 品 · 约 83bpm",
+      strum:"分解「根音 + 双音」T1(23)1（(23) 为同时拨两根弦）",
+      prog:[ ["前奏", "F → G → Am（循环）"],
+             ["主歌", "C → Em → F → C → Am → Em → F → G → C"],
+             ["副歌", "F → G → C → F → G → Am → F → G → Em → Am → F → G → C"] ],
+      chords:["C","Em","Am","F","G"],
+      note:"⚠️ 这首歌有多个同名版本：A-Lin 国语版（和弦简单，推荐）和袁凤瑛粤语版（罗大佑作曲，和弦多、有横按，较难）。这里是 A-Lin 版。" },
+    { name:"空心", artist:"光泽 G.Z", stars:"★★★☆", order:"第 4 首",
+      meta:"原调 C · C 调不夹 · 男生可夹 5–7 品 / 女生 0–2 品 · 4/4 拍",
+      strum:"分解循环（根音+3-2-1），F-G-Em-Am 反复",
+      prog:[ ["整曲循环", "Fmaj7 → G → Em7 → Am7（简记 F → G → Em → Am）"] ],
+      chords:["Fmaj7","G","Em7","Am7"],
+      note:"和弦就一条循环，弹起来不难。真正的难点在「唱」——原曲音域很高，男声建议用变调夹夹到合适音域。弹唱是「弹 + 唱」，别忽略唱的调。" },
+    { name:"晴天", artist:"周杰伦", stars:"★★★★", order:"第 5 首（最难，压轴）",
+      meta:"原调 G · C 调简化版可用 · 4/4 拍",
+      strum:"分解琶音 + 律动扫弦（整曲最吃节奏，前奏先跳过）",
+      prog:[ ["主歌（原调）", "Em → C → G → D（6-4-1-5）"],
+             ["副歌（原调）", "G → Em → C → D → G → B7 → Em → C → D → G"],
+             ["C 调简化", "Am → Fmaj7 → C → G → E7"] ],
+      chords:["C","G","Am","Em","D","B7","E7","Fmaj7"],
+      note:"五首里最难，难在前奏的分解琶音和整曲的律动节奏。建议：先用 C 调简化版（Am-Fmaj7-C-G-E7）把整首弹下来，再回头啃前奏和原调。留到曲库最后攻。" }
+  ];
+
+  // ---------- 检测清单 ----------
+  var CHECKS = [
+    { t:"换和弦速度", how:"计时 60 秒，数 C↔G 转换的次数。", bar:"达标线：阶段二起 ≥30 次/分" },
+    { t:"扫弦稳定性", how:"跟节拍器 60bpm 扫 30 秒，听是否忽快忽慢、卡壳。", bar:"达标：不间断、不抢拍" },
+    { t:"和弦按得干净", how:"逐个弹和弦，听有没有「嗡嗡」闷音或碰邻弦。", bar:"达标：每根弦都响、不碰邻弦" },
+    { t:"完整曲目", how:"跟节拍器完整弹唱一首歌，录下来回听。", bar:"达标：阶段三起 ≥1 首完整" },
+    { t:"录音回听", how:"手机录一遍自己弹，自己听出断点、抢拍、闷音。", bar:"达标：能自己定位 3 处问题" }
+  ];
+
+  // ---------- 愿景三步 ----------
+  var VISION = [
+    { n:1, t:"网站（现在这一步）",
+      desc:"把「路线图 + 30 天计划 + 曲库 + 检测」做成网页，边学边记录。验证内容有没有人需要，同时你自己就是第一个深度用户——你的抖音/B站打卡会积累最早的种子用户。" },
+    { n:2, t:"App（上架赚钱）",
+      desc:"网站跑通后套壳成 App（或 PWA）上架。差异化在「AI 陪你练」：手机麦克风实时听你弹，判断音准节奏对不对，像老师一样温柔纠错。变现点：进阶课程、去广告、会员订阅。" },
+    { n:3, t:"音乐精灵 · 具身智能（终极愿景）",
+      desc:"把「听 + 看 + 说 + 动」多模态接入硬件，做成一只温柔灵动的陪伴型音乐老师。技术拆解：听=麦克风音高/节拍/和弦识别；看=摄像头手型识别；脑=多模态大模型生成教学；体=吉他传感器（压感/IMU）或具身机器人。顺序必须是软件先行。" }
+  ];
+
+  // ---------- 状态 ----------
+  var progress = load(KEY, { done:{}, checks:{} });
+
+  // ---------- 工具 ----------
+  function load(k, fb) {
+    try { var r = localStorage.getItem(k); if (!r) return fb; var v = JSON.parse(r); return v && typeof v === "object" ? v : fb; }
+    catch (e) { return fb; }
+  }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(progress)); } catch (e) {} }
+
+  function $(id) { return document.getElementById(id); }
+
+  function fretAt(frets, s) { // s: 1-6（1=高音E），返回品位，x 记 -1
+    var c = frets[6 - s];
+    return c === "x" ? -1 : parseInt(c, 10);
+  }
+
+  // ---------- 和弦指法图 SVG ----------
+  function chordSVG(name) {
+    var def = CHORDS[name];
+    if (!def) return "";
+    var s = def.frets;
+    var W = 132, H = 150;
+    var xs = [24, 46, 68, 90, 112, 134];
+    var nutY = 44, gap = 26, fretCount = 4;
+    var parts = [];
+    for (var i = 0; i <= fretCount; i++) {
+      var y = nutY + i * gap;
+      var w = (i === 0) ? 3 : 1.2;
+      parts.push('<line x1="18" y1="' + y + '" x2="140" y2="' + y + '" stroke="currentColor" stroke-width="' + w + '" opacity="' + (i===0 ? 0.9 : 0.28) + '"/>');
+    }
+    for (var j = 0; j < 6; j++) {
+      parts.push('<line x1="' + xs[j] + '" y1="' + nutY + '" x2="' + xs[j] + '" y2="' + (nutY + fretCount * gap) + '" stroke="currentColor" stroke-width="1.2" opacity="0.5"/>');
+    }
+    for (var k = 0; k < 6; k++) {
+      var c = s[k];
+      var x = xs[k];
+      if (c === "x") {
+        parts.push('<text x="' + x + '" y="' + (nutY - 14) + '" text-anchor="middle" font-size="13" fill="currentColor">×</text>');
+      } else if (c === "0") {
+        parts.push('<circle cx="' + x + '" cy="' + (nutY - 17) + '" r="5" fill="none" stroke="currentColor" stroke-width="1.4"/>');
+      } else {
+        var fret = parseInt(c, 10);
+        var cy = nutY + fret * gap - gap / 2;
+        parts.push('<circle cx="' + x + '" cy="' + cy + '" r="8.5" fill="currentColor"/>');
+      }
+    }
+    return '<svg viewBox="0 0 158 ' + H + '" width="' + W + '" height="' + H + '" aria-label="' + name + ' 和弦指法">' + parts.join('') + '</svg>';
+  }
+
+  // ---------- 六线谱 SVG（根音 + 3-2-1 分解）----------
+  function tabSVG(name) {
+    var def = CHORDS[name];
+    if (!def) return "";
+    var root = ROOTS[name] || 5;
+    var notes = [root, 3, 2, 1];           // 第1拍根音，第2/3/4拍高音弦
+    var xs = [46, 78, 110, 142];
+    var yOf = { 1:16, 2:28, 3:40, 4:52, 5:64, 6:76 };  // 1弦在上，6弦在下
+    var names = ["e","B","G","D","A","E"];
+    var parts = [];
+    for (var s = 1; s <= 6; s++) {
+      var y = yOf[s];
+      parts.push('<line x1="26" y1="' + y + '" x2="158" y2="' + y + '" stroke="currentColor" stroke-width="1" opacity="0.4"/>');
+      parts.push('<text x="14" y="' + (y + 4) + '" text-anchor="middle" font-size="10" fill="currentColor" opacity="0.6">' + names[s-1] + '</text>');
+    }
+    notes.forEach(function (s, i) {
+      var f = fretAt(def.frets, s);
+      if (f < 0) return;
+      var y = yOf[s], x = xs[i];
+      var bold = i === 0;
+      parts.push('<text x="' + x + '" y="' + (y + 4) + '" text-anchor="middle" font-size="' + (bold ? 13 : 12) + '" font-weight="' + (bold ? '700' : '400') + '" fill="currentColor">' + f + '</text>');
+      if (bold) parts.push('<line x1="' + x + '" y1="' + (y + 5) + '" x2="' + x + '" y2="' + (y + 14) + '" stroke="currentColor" stroke-width="1.5"/>');
+    });
+    return '<svg viewBox="0 0 170 92" width="150" height="81" aria-label="' + name + ' 分解六线谱">' + parts.join('') + '</svg>';
+  }
+
+  // ---------- 渲染：路线图 ----------
+  function renderRoadmap() {
+    var done = Object.keys(progress.done).length;
+    var pct = Math.round(done / PLAN.length * 100);
+    $("roadProgress").style.width = pct + "%";
+    $("roadProgressTxt").textContent = "30 天计划已完成 " + done + " / " + PLAN.length + " 天（" + pct + "%）";
+
+    var today = PLAN.find(function (d) { return !progress.done[d.d]; });
+    var box = $("todayBox");
+    if (!today) {
+      box.innerHTML = '<div style="font-size:14px;color:var(--green);font-weight:700;line-height:1.7;">🎉 30 天全部完成！去「曲库」选下一首歌，或进入阶段五自由扩展。</div>';
+    } else {
+      box.innerHTML =
+        '<div class="day-badge"><div class="n">D' + today.d + '</div><div class="l">阶段' + "一二三四五".charAt(today.p - 1) + '</div></div>' +
+        '<div style="flex:1;">' +
+          '<div style="font-weight:700;font-size:15px;letter-spacing:0.5px;">' + today.t + '</div>' +
+          '<div style="font-size:13px;color:var(--ink-2);margin-top:7px;line-height:1.7;">' + today.tasks + '</div>' +
+          '<div style="font-size:12px;color:var(--muted);margin-top:7px;">💡 ' + today.tip + '</div>' +
+          '<button class="cta" data-goto="plan">练完去打卡 →</button>' +
+        '</div>';
+    }
+
+    $("stages").innerHTML = STAGES.map(function (s, i) {
+      return '<div class="stage">' +
+        '<div class="idx" style="--stage-c:' + s.color + '">' + (i + 1) + '</div>' +
+        '<div class="body">' +
+          '<div class="title">' + s.name + '</div>' +
+          '<div class="meta">' + s.days + '</div>' +
+          '<div class="goal">' + s.goal + '</div>' +
+          '<div class="check">✔ ' + s.check + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join("");
+  }
+
+  // ---------- 渲染：30 天计划 ----------
+  function renderPlan() {
+    var html = "";
+    var curPhase = 0;
+    var phaseName = ["", "阶段一 · 入门（第 1–7 天）", "阶段二 · 核心和弦（第 8–14 天）", "阶段三 · 第一首歌《光辉岁月》（第 15–21 天）", "阶段四 · 第二首歌《海阔天空》（第 22–30 天）"];
+    PLAN.forEach(function (d) {
+      if (d.p !== curPhase) { curPhase = d.p; html += '<div class="phase-head">' + phaseName[curPhase] + '</div>'; }
+      var done = !!progress.done[d.d];
+      html +=
+        '<div class="day-row' + (done ? " done" : "") + '" data-day="' + d.d + '">' +
+          '<div class="cb" title="点我打勾">' + (done ? "✓" : "") + '</div>' +
+          '<div class="d-body">' +
+            '<div class="d-title"><span class="d-num">Day ' + d.d + '</span>' + d.t + '</div>' +
+            '<div class="d-tasks">' + d.tasks + '</div>' +
+            '<div class="d-tip">💡 ' + d.tip + '</div>' +
+          '</div>' +
+        '</div>';
+    });
+    $("planList").innerHTML = html;
+  }
+
+  // ---------- 渲染：曲库 ----------
+  function renderSongs() {
+    $("songList").innerHTML = SONGS.map(function (song) {
+      var progHtml = song.prog.map(function (p) {
+        return '<div class="lab">' + p[0] + '</div><div class="chord-line">' + p[1] + '</div>';
+      }).join("");
+      var chordsHtml = song.chords.map(function (c) {
+        return '<div class="chord">' +
+          '<div class="c-name">' + c + '</div>' +
+          '<div class="c-cap">左手按法</div>' + chordSVG(c) +
+          '<div class="c-cap" style="margin-top:6px;">右手分解</div><div class="c-tab">' + tabSVG(c) + '</div>' +
+          (CHORDS[c] && CHORDS[c].tip ? '<div class="c-tip">' + CHORDS[c].tip + '</div>' : '') +
+        '</div>';
+      }).join("");
+      return '<div class="song">' +
+        '<div class="song-head"><div class="song-name">' + song.name + '<small>' + song.artist + '</small></div><div class="stars">' + song.stars + '</div></div>' +
+        '<div class="song-meta"><b>' + song.order + '</b> · ' + song.meta + '</div>' +
+        '<div class="song-prog">' + progHtml + '</div>' +
+        '<div class="strum"><span class="tag">节奏</span>' + song.strum + '</div>' +
+        '<div class="chords">' + chordsHtml + '</div>' +
+        '<div class="song-note"><span class="tag">要点</span>' + song.note + '</div>' +
+      '</div>';
+    }).join("");
+  }
+
+  // ---------- 渲染：检测 ----------
+  function renderChecks() {
+    $("checkList").innerHTML = CHECKS.map(function (c, i) {
+      var on = !!progress.checks[i];
+      return '<div class="check-item' + (on ? " on" : "") + '" data-idx="' + i + '">' +
+        '<div class="cb" title="点我打勾">' + (on ? "✓" : "") + '</div>' +
+        '<div class="c-body"><div class="c-title">' + c.t + '</div>' +
+        '<div class="c-how">' + c.how + '</div>' +
+        '<div class="c-bar">' + c.bar + '</div></div>' +
+      '</div>';
+    }).join("");
+  }
+
+  // ---------- 渲染：愿景 ----------
+  function renderVision() {
+    $("visionList").innerHTML = VISION.map(function (v) {
+      return '<div class="vision-step"><div class="v-num">' + v.n + '</div>' +
+        '<div><div class="v-title">' + v.t + '</div><div class="v-desc">' + v.desc + '</div></div></div>';
+    }).join("");
+  }
+
+  // ---------- 导航 ----------
+  function switchPage(page) {
+    document.querySelectorAll(".nav-tab").forEach(function (t) {
+      t.classList.toggle("active", t.getAttribute("data-page") === page);
+    });
+    document.querySelectorAll(".page").forEach(function (p) { p.classList.remove("active"); });
+    $("page-" + page).classList.add("active");
+  }
+
+  // ---------- 主题 ----------
+  function applyTheme() {
+    var dark = document.documentElement.dataset.theme === "dark";
+    $("themeToggle").textContent = dark ? "☀️" : "🌙";
+  }
+  function toggleTheme() {
+    var dark = document.documentElement.dataset.theme === "dark";
+    document.documentElement.dataset.theme = dark ? "light" : "dark";
+    applyTheme();
+  }
+
+  // ---------- 事件 ----------
+  $("nav").addEventListener("click", function (e) {
+    var t = e.target.closest(".nav-tab");
+    if (t) switchPage(t.getAttribute("data-page"));
+  });
+  $("themeToggle").addEventListener("click", toggleTheme);
+
+  // 全局：点击带 data-goto 的按钮跳页
+  document.addEventListener("click", function (e) {
+    var g = e.target.closest("[data-goto]");
+    if (g) switchPage(g.getAttribute("data-goto"));
+  });
+
+  // 首次引导关闭
+  function onboardShown() {
+    try { return localStorage.getItem(ONBOARD_KEY) === "1"; } catch (e) { return false; }
+  }
+  if (onboardShown()) { $("onboard").style.display = "none"; }
+  $("onboardClose").addEventListener("click", function () {
+    $("onboard").style.display = "none";
+    try { localStorage.setItem(ONBOARD_KEY, "1"); } catch (e) {}
+  });
+
+  $("planList").addEventListener("click", function (e) {
+    var row = e.target.closest(".day-row");
+    if (!row) return;
+    var d = row.getAttribute("data-day");
+    if (progress.done[d]) { delete progress.done[d]; }
+    else { progress.done[d] = true; }
+    save();
+    renderPlan();
+    renderRoadmap();
+  });
+
+  $("checkList").addEventListener("click", function (e) {
+    var item = e.target.closest(".check-item");
+    if (!item) return;
+    var i = item.getAttribute("data-idx");
+    if (progress.checks[i]) { delete progress.checks[i]; }
+    else { progress.checks[i] = true; }
+    save();
+    renderChecks();
+  });
+
+  // ---------- 启动 ----------
+  applyTheme();
+  renderRoadmap();
+  renderPlan();
+  renderSongs();
+  renderChecks();
+  renderVision();
+})();
+</script>
+</body>
+</html>
