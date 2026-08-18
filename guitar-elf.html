@@ -231,6 +231,8 @@
   .chord-line { font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; font-size: 13px; color: var(--ink-2); line-height: 1.9; }
   .chord-line b { color: var(--accent-2); font-weight: 700; }
   .strum { margin-top: 14px; font-size: 13px; color: var(--ink-2); line-height: 1.7; }
+  .full-tab { margin-top: 16px; padding: 14px 12px 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; overflow-x: auto; }
+  .full-tab .lab { font-size: 11px; color: var(--accent-2); margin-bottom: 10px; font-weight: 700; letter-spacing: 1px; }
   .strum .tag { display: inline-block; font-size: 11px; color: #fff; background: var(--accent); border-radius: 6px; padding: 2px 9px; margin-right: 8px; letter-spacing: 1px; }
   .chords { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 18px; }
   .chord {
@@ -258,6 +260,17 @@
   .check-item .c-how { font-size: 12px; color: var(--ink-2); margin-top: 4px; line-height: 1.7; }
   .check-item .c-bar { font-size: 12px; color: var(--accent-2); margin-top: 4px; }
 
+  /* ---------- AI 练琴 ---------- */
+  .tuner { max-width: 400px; margin: 0 auto; padding: 10px 0 4px; }
+  .tuner-note { font-size: 72px; font-weight: 800; line-height: 1; font-family: Georgia, serif; color: var(--ink); }
+  .tuner-freq { font-size: 14px; color: var(--muted); margin-top: 8px; font-variant-numeric: tabular-nums; }
+  .tuner-meter { position: relative; height: 44px; margin: 22px 0 8px; background: var(--ring); border-radius: 99px; overflow: hidden; display: flex; }
+  .tuner-zone { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--muted); letter-spacing: 1px; }
+  .tuner-zone.low { background: linear-gradient(90deg, rgba(200,90,80,0.16), transparent); }
+  .tuner-zone.high { background: linear-gradient(270deg, rgba(200,90,80,0.16), transparent); }
+  .tuner-needle { position: absolute; top: 5px; bottom: 5px; left: 50%; width: 3px; background: var(--accent-2); border-radius: 2px; transform: translateX(-50%); transition: left 0.08s linear; }
+  .tuner-cents { font-size: 13px; color: var(--ink-2); min-height: 20px; font-variant-numeric: tabular-nums; }
+
   /* ---------- 愿景 ---------- */
   .vision-step { display: flex; gap: 16px; padding: 20px 2px; border-bottom: 1px solid var(--line); }
   .vision-step:last-child { border-bottom: none; }
@@ -272,11 +285,18 @@
   .foot { text-align: center; font-size: 12px; color: var(--muted); margin-top: 36px; line-height: 1.8; letter-spacing: 0.5px; }
 
   @media (max-width: 520px) {
-    .nav-tab { min-width: 70px; font-size: 13px; letter-spacing: 0; }
+    .nav-tab { min-width: 62px; font-size: 13px; letter-spacing: 0; padding-left: 4px; padding-right: 4px; }
     .brand .sub { display: none; }
-    .hero .hi { font-size: 23px; }
+    .hero .hi { font-size: 22px; }
     .today-box { flex-direction: column; }
     .onboard { flex-direction: column; align-items: flex-start; }
+    .wrap { padding: 24px 14px 56px; }
+    .card { padding: 20px 16px; border-radius: 16px; }
+    .chords { gap: 8px; }
+    .chord { padding: 8px 5px 6px; }
+    .tuner-note { font-size: 56px; }
+    .song { padding: 18px 16px; }
+    .day-row { padding: 14px 12px; }
   }
 </style>
 </head>
@@ -316,6 +336,7 @@
     <button class="nav-tab" data-page="plan">30天计划</button>
     <button class="nav-tab" data-page="songs">曲库</button>
     <button class="nav-tab" data-page="check">检测</button>
+    <button class="nav-tab" data-page="tuner">AI练琴</button>
     <button class="nav-tab" data-page="vision">愿景</button>
   </div>
 
@@ -368,6 +389,28 @@
     <div class="card gilt" id="checkList"></div>
   </section>
 
+  <!-- ============ AI 练琴 ============ -->
+  <section class="page" id="page-tuner">
+    <div class="card gilt">
+      <h2><span class="dot"></span>AI 练琴 · 实时听音纠错</h2>
+      <p class="lead">点下方按钮允许麦克风，然后<b>弹一根弦</b>或<b>按一个音</b>，页面会实时显示你弹的是哪个音、偏高还是偏低。用来调音、练按弦准度。</p>
+    </div>
+    <div class="card gilt" style="text-align:center;">
+      <div class="tuner">
+        <div class="tuner-note" id="tunerNote">—</div>
+        <div class="tuner-freq" id="tunerFreq">等待收音…</div>
+        <div class="tuner-meter" id="tunerMeter">
+          <span class="tuner-zone low">偏低</span>
+          <span class="tuner-needle" id="tunerNeedle"></span>
+          <span class="tuner-zone high">偏高</span>
+        </div>
+        <div class="tuner-cents" id="tunerCents"></div>
+        <button class="cta" id="tunerToggle">🎙 开启麦克风</button>
+      </div>
+      <p class="lead" style="margin-top:18px;">💡 六根弦标准音：6弦 E2 · 5弦 A2 · 4弦 D3 · 3弦 G3 · 2弦 B3 · 1弦 E4。指针居中=准 ✓</p>
+    </div>
+  </section>
+
   <!-- ============ 愿景 ============ -->
   <section class="page" id="page-vision">
     <div class="card gilt hero">
@@ -402,11 +445,14 @@
     "G7":   { frets: "320001" },
     "Am":   { frets: "x02210" },
     "Am7":  { frets: "x02010" },
-    "B7":   { frets: "x21202" }
+    "B7":   { frets: "x21202" },
+    "A":    { frets: "x02220" },
+    "Cmaj7":{ frets: "x32000" },
+    "D7":   { frets: "xx0212" }
   };
 
   // 各和弦的「根音弦」（分解和弦第 1 拍拨哪根低音弦）
-  var ROOTS = { "C":5, "G":6, "Am":5, "Em":6, "F":4, "Dm":4, "D":4, "Fmaj7":4, "Em7":6, "Am7":5, "E":6, "E7":6, "B7":5, "G7":6 };
+  var ROOTS = { "C":5, "G":6, "Am":5, "Em":6, "F":4, "Dm":4, "D":4, "Fmaj7":4, "Em7":6, "Am7":5, "E":6, "E7":6, "B7":5, "G7":6, "A":5, "Cmaj7":5, "D7":4 };
 
   // ---------- 五阶段路线图 ----------
   var STAGES = [
@@ -539,7 +585,19 @@
              ["前奏", "原版用 F9（拇指按 6 弦），可先用 C → Am → F 简化"] ],
       chords:["C","G","Am","F","Dm"],
       note:"和光辉岁月是「近亲」，和弦高度重叠，所以第二首会学得很快。重点在副歌的情绪层次：主歌用分解、副歌切扫弦。" },
-    { name:"天若有情", artist:"A-Lin（锦绣未央主题曲）", stars:"★★★", order:"第 3 首",
+    { name:"奇妙能力歌", artist:"陈粒", stars:"★★☆", order:"第 3 首",
+      meta:"原调 C · C 调不夹 · 4/4 拍 · 约 109bpm",
+      strum:"整曲一个分解节奏型（根音+3-2-1），和弦转换熟练即流畅",
+      prog:[ ["主歌 / 副歌循环", "F → G → Em → Am → F → G → C → C"] ],
+      chords:["F","G","Em","Am","C"],
+      note:"陈粒最经典、最适合新手的民谣。从头到尾一个分解节奏型，唯一难点是 F 大横按（可先用小横按替代）。换和弦跟不上时，可在每小节结尾弹一下二弦空弦垫一拍。" },
+    { name:"走马", artist:"陈粒", stars:"★★☆", order:"第 4 首",
+      meta:"原调 C · C 调不夹 · 4/4 拍",
+      strum:"整曲一个分解循环（根音+3-2-1），和弦转换熟练即流畅",
+      prog:[ ["主歌 / 副歌循环", "Fmaj7 → G → Em7 → Am7（简记 F → G → Em → Am）"] ],
+      chords:["Fmaj7","G","Em7","Am7"],
+      note:"陈粒标志性的「F-G-Em-Am」分解循环，和《空心》同一套和弦骨架，学起来很快。副歌「走马观花」部分情绪上扬，扫弦可稍加力。和弦简单，适合新手。" },
+    { name:"天若有情", artist:"A-Lin（锦绣未央主题曲）", stars:"★★★", order:"第 5 首",
       meta:"原调 D♭ · C 调指法 + 变调夹第 3 品 · 约 83bpm",
       strum:"分解「根音 + 双音」T1(23)1（(23) 为同时拨两根弦）",
       prog:[ ["前奏", "F → G → Am（循环）"],
@@ -547,19 +605,33 @@
              ["副歌", "F → G → C → F → G → Am → F → G → Em → Am → F → G → C"] ],
       chords:["C","Em","Am","F","G"],
       note:"⚠️ 这首歌有多个同名版本：A-Lin 国语版（和弦简单，推荐）和袁凤瑛粤语版（罗大佑作曲，和弦多、有横按，较难）。这里是 A-Lin 版。" },
-    { name:"空心", artist:"光泽 G.Z", stars:"★★★☆", order:"第 4 首",
+    { name:"小半", artist:"陈粒", stars:"★★★", order:"第 6 首",
+      meta:"原调 G · C 调指法 · 6/8 拍",
+      strum:"6/8 拍分解（根音放重拍，高音弦交替），节奏如「一二三、二二三」",
+      prog:[ ["主歌 / 副歌循环", "C → Am → F → G（原谱 G-Em-Cmaj7-D7 的 C 调版）"] ],
+      chords:["C","Am","F","G"],
+      note:"6/8 拍的歌，节奏感是重点——每小节 6 拍。分解时根音放在重拍。女生可夹变调夹 5 品左右。和弦本身不难，难在 6/8 的律动。" },
+    { name:"空心", artist:"光泽 G.Z", stars:"★★★☆", order:"第 7 首",
       meta:"原调 C · C 调不夹 · 男生可夹 5–7 品 / 女生 0–2 品 · 4/4 拍",
       strum:"分解循环（根音+3-2-1），F-G-Em-Am 反复",
       prog:[ ["整曲循环", "Fmaj7 → G → Em7 → Am7（简记 F → G → Em → Am）"] ],
       chords:["Fmaj7","G","Em7","Am7"],
       note:"和弦就一条循环，弹起来不难。真正的难点在「唱」——原曲音域很高，男声建议用变调夹夹到合适音域。弹唱是「弹 + 唱」，别忽略唱的调。" },
-    { name:"晴天", artist:"周杰伦", stars:"★★★★", order:"第 5 首（最难，压轴）",
+    { name:"易燃易爆炸", artist:"陈粒", stars:"★★★☆", order:"第 8 首",
+      meta:"原调 D♭ · C 调指法 + 变调夹第 1 品 · 4/4 拍 · 约 115bpm",
+      strum:"扫弦 + 闷音(P.M.)节奏，速度快需跟节拍器",
+      prog:[ ["主歌（简化）", "Am → F → C → G"],
+             ["副歌", "F → G → Em → Am"] ],
+      chords:["Am","F","C","G","Em","Dm"],
+      note:"陈粒传唱度很高的一首，速度偏快(115bpm)，难点在闷音扫弦(P.M.)和气息。建议先慢速跟节拍器扫干净，再加速、再加闷音。放在曲库偏后位置。" },
+    { name:"晴天", artist:"周杰伦", stars:"★★★★", order:"第 9 首（最难，压轴）",
       meta:"原调 G · C 调简化版可用 · 4/4 拍",
       strum:"分解琶音 + 律动扫弦（整曲最吃节奏，前奏先跳过）",
       prog:[ ["主歌（原调）", "Em → C → G → D（6-4-1-5）"],
              ["副歌（原调）", "G → Em → C → D → G → B7 → Em → C → D → G"],
              ["C 调简化", "Am → Fmaj7 → C → G → E7"] ],
       chords:["C","G","Am","Em","D","B7","E7","Fmaj7"],
+      fullTab:{ title:"晴天前奏 · 主歌（G 调分解）", bars:["Em","C","G","D"] },
       note:"五首里最难，难在前奏的分解琶音和整曲的律动节奏。建议：先用 C 调简化版（Am-Fmaj7-C-G-E7）把整首弹下来，再回头啃前奏和原调。留到曲库最后攻。" }
   ];
 
@@ -658,6 +730,42 @@
     return '<svg viewBox="0 0 170 92" width="150" height="81" aria-label="' + name + ' 分解六线谱">' + parts.join('') + '</svg>';
   }
 
+  // ---------- 完整六线谱（多小节和弦进行）----------
+  function progressionTabSVG(bars) {
+    var stringY = { 1:20, 2:32, 3:44, 4:56, 5:68, 6:80 };
+    var names = ["e","B","G","D","A","E"];
+    var barW = 96;
+    var W = bars.length * barW + 26;
+    var H = 102;
+    var parts = [];
+    for (var s = 1; s <= 6; s++) {
+      var y = stringY[s];
+      parts.push('<line x1="26" y1="' + y + '" x2="' + (W - 12) + '" y2="' + y + '" stroke="currentColor" stroke-width="1" opacity="0.4"/>');
+      parts.push('<text x="12" y="' + (y + 4) + '" text-anchor="middle" font-size="10" fill="currentColor" opacity="0.6">' + names[s-1] + '</text>');
+    }
+    bars.forEach(function (chord, bi) {
+      var x0 = 32 + bi * barW;
+      parts.push('<line x1="' + x0 + '" y1="' + stringY[1] + '" x2="' + x0 + '" y2="' + stringY[6] + '" stroke="currentColor" stroke-width="1.4" opacity="0.5"/>');
+      parts.push('<text x="' + (x0 + 10) + '" y="14" font-size="13" font-weight="700" fill="currentColor">' + chord + '</text>');
+      var def = CHORDS[chord];
+      if (def) {
+        var root = ROOTS[chord] || 5;
+        var notes = [root, 3, 2, 1];
+        var xs = [x0 + 16, x0 + 38, x0 + 60, x0 + 82];
+        notes.forEach(function (sn, i) {
+          var f = fretAt(def.frets, sn);
+          if (f < 0) return;
+          var yy = stringY[sn];
+          var bold = i === 0;
+          parts.push('<text x="' + xs[i] + '" y="' + (yy + 4) + '" text-anchor="middle" font-size="12" font-weight="' + (bold ? '700' : '400') + '" fill="currentColor">' + f + '</text>');
+          if (bold) parts.push('<line x1="' + xs[i] + '" y1="' + (yy + 5) + '" x2="' + xs[i] + '" y2="' + (yy + 13) + '" stroke="currentColor" stroke-width="1.2"/>');
+        });
+      }
+    });
+    parts.push('<line x1="' + (W - 16) + '" y1="' + stringY[1] + '" x2="' + (W - 16) + '" y2="' + stringY[6] + '" stroke="currentColor" stroke-width="1.4" opacity="0.5"/>');
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="' + H + '" preserveAspectRatio="xMinYMid meet" aria-label="完整六线谱">' + parts.join('') + '</svg>';
+  }
+
   // ---------- 渲染：路线图 ----------
   function renderRoadmap() {
     var done = Object.keys(progress.done).length;
@@ -733,6 +841,7 @@
         '<div class="song-meta"><b>' + song.order + '</b> · ' + song.meta + '</div>' +
         '<div class="song-prog">' + progHtml + '</div>' +
         '<div class="strum"><span class="tag">节奏</span>' + song.strum + '</div>' +
+        (song.fullTab ? '<div class="full-tab"><div class="lab">' + song.fullTab.title + '</div>' + progressionTabSVG(song.fullTab.bars) + '</div>' : '') +
         '<div class="chords">' + chordsHtml + '</div>' +
         '<div class="song-note"><span class="tag">要点</span>' + song.note + '</div>' +
       '</div>';
@@ -780,12 +889,100 @@
     applyTheme();
   }
 
+  // ---------- AI 练琴：实时音高检测 ----------
+  var micStream = null, tunerAudioCtx = null, tunerAnalyser = null, tunerOn = false, tunerRaf = null;
+
+  function midiFromFreq(f) { return 12 * (Math.log(f / 440) / Math.LN2) + 69; }
+  function freqFromMidi(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+  function noteNameOf(m) {
+    var names = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+    var mm = ((m % 12) + 12) % 12;
+    return names[mm] + (Math.floor(m / 12) - 1);
+  }
+  // 自相关算法：从时域采样估算基频
+  function autoCorrelate(buf, sr) {
+    var SIZE = buf.length, rms = 0, i;
+    for (i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
+    rms = Math.sqrt(rms / SIZE);
+    if (rms < 0.01) return -1;
+    var r1 = 0, r2 = SIZE - 1, thres = 0.2;
+    for (i = 0; i < SIZE / 2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
+    for (i = 1; i < SIZE / 2; i++) if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
+    buf = buf.slice(r1, r2);
+    SIZE = buf.length;
+    var c = new Array(SIZE);
+    for (i = 0; i < SIZE; i++) {
+      c[i] = 0;
+      for (var j = 0; j < SIZE - i; j++) c[i] += buf[j] * buf[j + i];
+    }
+    var d = 0;
+    while (c[d] > c[d + 1]) d++;
+    var maxval = -1, maxpos = -1;
+    for (i = d; i < SIZE; i++) if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
+    var T0 = maxpos;
+    var x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
+    var a = (x1 + x3 - 2 * x2) / 2, b = (x3 - x1) / 2;
+    if (a) T0 = T0 - b / (2 * a);
+    return sr / T0;
+  }
+
+  function startTuner() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert("当前浏览器不支持麦克风。手机端请用系统浏览器通过 https 打开本站，并允许麦克风权限。");
+      return;
+    }
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+      micStream = stream;
+      var AC = window.AudioContext || window.webkitAudioContext;
+      tunerAudioCtx = new AC();
+      tunerAnalyser = tunerAudioCtx.createAnalyser();
+      tunerAnalyser.fftSize = 2048;
+      tunerAudioCtx.createMediaStreamSource(stream).connect(tunerAnalyser);
+      tunerOn = true;
+      $("tunerToggle").textContent = "⏹ 停止收音";
+      var buf = new Float32Array(tunerAnalyser.fftSize);
+      function loop() {
+        if (!tunerOn) return;
+        tunerAnalyser.getFloatTimeDomainData(buf);
+        updateTuner(autoCorrelate(buf, tunerAudioCtx.sampleRate));
+        tunerRaf = requestAnimationFrame(loop);
+      }
+      loop();
+    }).catch(function (err) {
+      alert("麦克风授权失败或被拒绝：" + (err && err.message ? err.message : err) + "。请在浏览器地址栏允许本站使用麦克风。");
+    });
+  }
+  function stopTuner() {
+    tunerOn = false;
+    if (tunerRaf) cancelAnimationFrame(tunerRaf);
+    if (micStream) { micStream.getTracks().forEach(function (t) { t.stop(); }); micStream = null; }
+    if (tunerAudioCtx && tunerAudioCtx.close) { tunerAudioCtx.close(); tunerAudioCtx = null; tunerAnalyser = null; }
+    $("tunerToggle").textContent = "🎙 开启麦克风";
+    $("tunerNote").textContent = "—";
+    $("tunerFreq").textContent = "等待收音…";
+    $("tunerCents").textContent = "";
+    $("tunerNeedle").style.left = "50%";
+  }
+  function updateTuner(freq) {
+    if (freq < 0) return;
+    var midi = Math.round(midiFromFreq(freq));
+    var target = freqFromMidi(midi);
+    var cents = Math.round(1200 * Math.log(freq / target) / Math.LN2);
+    $("tunerNote").textContent = noteNameOf(midi);
+    $("tunerFreq").textContent = freq.toFixed(1) + " Hz";
+    $("tunerCents").textContent = (cents > 0 ? "+" : "") + cents + " 音分 · " + (Math.abs(cents) <= 5 ? "准 ✓" : (cents < 0 ? "偏低" : "偏高"));
+    var left = 50 + cents;
+    if (left < 2) left = 2; if (left > 98) left = 98;
+    $("tunerNeedle").style.left = left + "%";
+  }
+
   // ---------- 事件 ----------
   $("nav").addEventListener("click", function (e) {
     var t = e.target.closest(".nav-tab");
     if (t) switchPage(t.getAttribute("data-page"));
   });
   $("themeToggle").addEventListener("click", toggleTheme);
+  $("tunerToggle").addEventListener("click", function () { tunerOn ? stopTuner() : startTuner(); });
 
   // 全局：点击带 data-goto 的按钮跳页
   document.addEventListener("click", function (e) {
